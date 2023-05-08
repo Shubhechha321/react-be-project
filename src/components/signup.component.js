@@ -1,9 +1,14 @@
 import React, { Component, useState } from "react";
+import styles from "./SignupSignIn.module.css";
+import { useHistory } from "react-router-dom";
+
 export default function SignUp() {
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLasstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(false);
 
@@ -15,13 +20,25 @@ export default function SignUp() {
 
   // Handling the last name change
   const handleLastName = (e) => {
-    setFirstName(e.target.value);
+    setLastName(e.target.value);
+    setSubmitted(false);
+  };
+
+  // Handling the username change
+  const handleUserName = (e) => {
+    setUserName(e.target.value);
     setSubmitted(false);
   };
 
   // Handling the email change
   const handleEmail = (e) => {
     setEmail(e.target.value);
+    setSubmitted(false);
+  };
+
+  // Handling the role change
+  const handleRole = (e) => {
+    setRole(e.target.value);
     setSubmitted(false);
   };
 
@@ -32,28 +49,108 @@ export default function SignUp() {
   };
 
   // Handling the form submission
-  const handleSubmit = (e) => {
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   if (
+  //     firstName === "" ||
+  //     lastName === "" ||
+  //     email === "" ||
+  //     password === ""
+  //   ) {
+  //     console.log("empty");
+  //     setError(true);
+  //   } else {
+  //     console.log("hello", email, password);
+  //     // setSubmitted(true);
+  //     // setError(false);
+  //     fetch("http://localhost:8800/api/auth/register", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ firstName, lastName, email, password }),
+  //     })
+  //       .then((response) => response.json())
+  //       .then((data) => {
+  //         setSubmitted(true);
+  //         setError(false);
+  //         // Redirect to login screen
+  //         window.location.href = "/sign-in";
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error:", error);
+  //         setError(true);
+  //       });
+  //   }
+  // };
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (
       firstName === "" ||
       lastName === "" ||
+      username === "" ||
       email === "" ||
-      password === ""
+      password === "" ||
+      role === ""
     ) {
-      console.log("empty");
       setError(true);
-    } else {
-      console.log("hello", email, password);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8800/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          username,
+          email,
+          password,
+          role,
+        }),
+      });
+      console.log(
+        "response: ",
+        JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          role,
+        })
+      );
+      if (!response.ok) {
+        throw new Error("Something went wrong");
+      }
+
       setSubmitted(true);
       setError(false);
+    } catch (err) {
+      setError(true);
+      console.log("error occured");
+      console.error(err);
     }
   };
 
+  if (submitted) {
+    // Redirect to login page
+    window.location.href = "/sign-in";
+  }
+
   return (
-    <form>
-      <h3>Sign Up</h3>
+    <form
+      className={styles.form}
+      style={{
+        marginTop: "100px",
+      }}
+    >
+      <h3 className={styles.heading}>Sign Up</h3>
       <div className="mb-3">
-        <label>First name</label>
+        <label className={styles.label}>First name</label>
         <input
           type="text"
           className="form-control"
@@ -63,17 +160,17 @@ export default function SignUp() {
         />
       </div>
       <div className="mb-3">
-        <label>Last name</label>
+        <label className={styles.label}>Last name</label>
         <input
           type="text"
           className="form-control"
-          placeholder="Last name"
+          placeholder="First name"
           onChange={handleLastName}
           value={lastName}
         />
       </div>
       <div className="mb-3">
-        <label>Email address</label>
+        <label className={styles.label}>Email address</label>
         <input
           type="email"
           className="form-control"
@@ -83,7 +180,30 @@ export default function SignUp() {
         />
       </div>
       <div className="mb-3">
-        <label>Password</label>
+        <label className={styles.label}>Username</label>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Username"
+          onChange={handleUserName}
+          value={username}
+        />
+      </div>
+      <div className="mb-3">
+        <label className={styles.label}>Role</label>
+        <select
+          className="form-select"
+          aria-label="Select role"
+          onChange={handleRole}
+          value={role}
+        >
+          <option value="">Select role</option>
+          <option value="applicant">Applicant</option>
+          <option value="recruiter">Recruiter</option>
+        </select>
+      </div>
+      <div className="mb-3">
+        <label className={styles.label}>Password</label>
         <input
           type="password"
           className="form-control"
@@ -92,8 +212,17 @@ export default function SignUp() {
           value={password}
         />
       </div>
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          Please fill in all fields
+        </div>
+      )}
       <div className="d-grid">
-        <button type="submit" className="btn btn-primary">
+        <button
+          onClick={handleSubmit}
+          type="submit"
+          className="btn btn-primary"
+        >
           Sign Up
         </button>
       </div>

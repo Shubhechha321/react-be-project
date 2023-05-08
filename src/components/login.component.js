@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import styles from "./SignupSignIn.module.css";
+
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 
@@ -12,15 +14,17 @@ async function loginUser(credentials) {
   }).then((data) => data.json());
 }
 
-export default function Login() {
+export default function Login({ setToken, setRole }) {
   // States for registration
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(false);
+  const [loginError, setLoginError] = useState(false);
+  const [accessToken, setAccessToken] = useState("");
+  const [userRole, setUserRole] = useState("");
 
-  //   let navigate = useNavigate();
-
+  const navigate = useNavigate();
   // Handling the email change
   const handleEmail = (e) => {
     setEmail(e.target.value);
@@ -36,31 +40,77 @@ export default function Login() {
   // Handling the form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (email === "" || password === "") {
-      console.log("empty");
       setError(true);
-    } else {
-      console.log("hello", email, password);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8800/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json(); // wait for the response to resolve and parse the JSON data
+      console.log(data.accessToken); // log the JSON data to the console
+      console.log(data.role);
+      if (!response.ok) {
+        throw new Error("Something went wrong");
+      }
       setSubmitted(true);
+      setAccessToken(data.accessToken);
+      setUserRole(data.role);
+
+      // localStorage.getItem("token")
+      console.log("response: ", response.json);
       setError(false);
-      //   e.preventDefault();
-      //   const token = await loginUser({
-      //     email,
-      //     password,
-      //   });
-      //   setToken(token);
-      console.log("");
-      window.location.href = "/dashboard";
+    } catch (err) {
+      setLoginError(true);
+      console.log("error occured");
+      // console.error(err);
     }
   };
+
+  useEffect(() => {
+    // pass accessToken to App.js as prop once it is available
+    if ((accessToken, userRole)) {
+      // props.setAccessToken(accessToken);
+      setToken(accessToken);
+      setRole(userRole);
+      localStorage.setItem("token", JSON.stringify(accessToken));
+      localStorage.setItem("role", JSON.stringify(userRole));
+      // navigate("/");
+    }
+  }, [accessToken, userRole]);
+
+  if (submitted) {
+    // Redirect to login page
+    // navigate("/");
+    // window.location.href = "/";
+    if (userRole === "applicant") window.location.href = "/jobs";
+    else window.location.href = "/recruiterJobs";
+    // navigate("/recruiterJobs");
+  }
 
   // Showing error message if error is true
 
   return (
-    <form>
-      <h3>Sign In</h3>
+    <form
+      className={styles.form}
+      style={{
+        marginTop: "100px",
+      }}
+    >
+      <h3 className={styles.heading}>Sign In</h3>
       <div className="mb-3">
-        <label>Email address</label>
+        <label className={styles.label}>Email address</label>
         <input
           type="email"
           className="form-control"
@@ -70,7 +120,7 @@ export default function Login() {
         />
       </div>
       <div className="mb-3">
-        <label>Password</label>
+        <label className={styles.label}>Password</label>
         <input
           type="password"
           className="form-control"
@@ -79,18 +129,60 @@ export default function Login() {
           value={password}
         />
       </div>
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <div className="custom-control custom-checkbox">
           <input
             type="checkbox"
             className="custom-control-input"
             id="customCheck1"
           />
-          <label className="custom-control-label" htmlFor="customCheck1">
+           <label className="custom-control-label" htmlFor="customCheck1">
+            Remember me
+          </label> 
+        </div>
+      </div> */}
+      <div
+        className="mb-3"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          flexDirection: "row",
+          justifyContent: "flex-start",
+        }}
+      >
+        <div
+          className="custom-control custom-checkbox"
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "flex-start",
+          }}
+        >
+          <input
+            type="checkbox"
+            className="custom-control-input"
+            id="customCheck1"
+          />
+          <label
+            className="custom-control-label"
+            htmlFor="customCheck1"
+            style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+          >
             Remember me
           </label>
         </div>
       </div>
+
+      {error && (
+        <div className="alert alert-danger" role="alert">
+          Please fill in all fields
+        </div>
+      )}
+      {loginError && (
+        <div className="alert alert-danger" role="alert">
+          Wrong username or password
+        </div>
+      )}
       <div className="d-grid">
         <button
           onClick={handleSubmit}
@@ -110,7 +202,8 @@ export default function Login() {
   );
 }
 
-// Login.propTypes = {
-//   setToken: PropTypes.func.isRequired,
-// };
+Login.propTypes = {
+  setToken: PropTypes.func.isRequired,
+  setRole: PropTypes.func.isRequired,
+};
 // https://www.digitalocean.com/community/tutorials/how-to-add-login-authentication-to-react-applications

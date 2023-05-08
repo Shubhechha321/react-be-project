@@ -25,14 +25,6 @@ export default function Dashboard(props) {
         >
           <Button>Upload</Button>
         </Upload>
-
-        {/* <Player
-          playsInline
-          src={videoSrc}
-          fluid={false}
-          width={10}
-          height={4}
-        /> */}
       </div>
     </React.Fragment>
   );
