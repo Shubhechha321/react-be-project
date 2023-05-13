@@ -6,6 +6,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "./Jobs.module.css";
+import { useEffect } from "react";
 
 const { Meta } = Card;
 
@@ -20,7 +21,7 @@ const JobCard = ({ job, onApply }) => {
 
   return (
     <Link
-      to={`/jobs/${job.id}`}
+      to={`/jobs/${job._id}`}
       state={{ job }}
       style={{ textDecoration: "none", color: "ButtonText" }}
     >
@@ -39,18 +40,19 @@ const JobCard = ({ job, onApply }) => {
         cover={
           <div
             style={{
-              height: "240px",
-              backgroundImage: `url('https://picsum.photos/320/240?random=${job.id}')`,
+              height: "160px",
+              // backgroundImage: `url('https://picsum.photos/320/240?random=${job.id}')`,
+              backgroundImage: `url('${job.url}')`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           ></div>
         }
       >
-        <div style={{ padding: "16px" }}>
-          <Meta title={job.title} description={job.company} />
-          <p style={{ marginTop: "8px", fontSize: "18px", color: "#666" }}>
-            {job.description}
+        <div style={{ padding: "8px", height: 180 }}>
+          <Meta title={job.title} description={job.companyName} />
+          <p style={{ marginTop: "8px", fontSize: "10px", color: "#666" }}>
+            {job.desc}
           </p>
         </div>
         <div style={{ borderTop: "1px solid #eee", padding: "16px" }}>
@@ -62,53 +64,7 @@ const JobCard = ({ job, onApply }) => {
     </Link>
   );
 };
-const jobData = [
-  {
-    id: 1,
-    title: "Frontend Developer",
-    company: "ABC Inc.",
-    questions: [
-      "What is your experience with React?",
-      "Why do you want to work with us?",
-    ],
-  },
-  {
-    id: 2,
-    title: "Backend Developer",
-    company: "XYZ Corp.",
-    questions: [
-      "What is your experience with React?",
-      "Why do you want to work with us?",
-    ],
-  },
-  {
-    id: 3,
-    title: "Full Stack Developer",
-    company: "123 LLC",
-    questions: [
-      "What is your experience with React?",
-      "Why do you want to work with us?",
-    ],
-  },
-  {
-    id: 4,
-    title: "Data Analyst",
-    company: "Acme Co.",
-    questions: [
-      "What is your experience with React?",
-      "Why do you want to work with us?",
-    ],
-  },
-  {
-    id: 5,
-    title: "UX Designer",
-    company: "Big Corp.",
-    questions: [
-      "What is your experience with React?",
-      "Why do you want to work with us?",
-    ],
-  },
-];
+var jobData = [];
 
 const Jobs = () => {
   const [jobs, setJobs] = useState(jobData);
@@ -127,15 +83,27 @@ const Jobs = () => {
   };
 
   const handleSearch = () => {
-    const filtered = jobs.filter((job) =>
-      job.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredJobs = jobData.filter(
+      (job) =>
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.companyName.toLowerCase().includes(searchQuery.toLowerCase())
     );
-    setJobs(filtered);
+    const uniqueJobs = Array.from(
+      new Set(filteredJobs.map((job) => job.id))
+    ).map((id) => filteredJobs.find((job) => job.id === id));
+    setJobs(uniqueJobs);
   };
 
   const handleReset = () => {
     setSearchQuery("");
-    setJobs(jobData);
+    setSearchQuery("");
+    fetch("http://localhost:8800/api/jobs")
+      .then((response) => response.json())
+      .then((data) => {
+        setJobs(data);
+        jobData = data;
+      })
+      .catch((error) => console.error(error));
   };
   const settings = {
     dots: false,
@@ -154,6 +122,24 @@ const Jobs = () => {
       </Button>
     ),
   };
+  useEffect(() => {
+    fetch("http://localhost:8800/api/jobs")
+      .then((response) => response.json())
+      .then((data) => {
+        setJobs(data);
+      })
+      .catch((error) => console.error(error));
+  }, []);
+
+  useEffect(() => {
+    const filtered = jobData.filter(
+      (job) =>
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.companyName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setJobs(filtered);
+  }, [searchQuery]);
+
   return (
     <div className="jobs-container">
       <h1 className="jobs-title">Find Your Dream Job</h1>
@@ -191,7 +177,7 @@ const Jobs = () => {
         style={{ marginLeft: "36px", width: "95%" }}
       >
         {jobs.map((job) => (
-          <JobCard key={job.id} job={job} onApply={handleApply} />
+          <JobCard key={job._id} job={job} onApply={handleApply} />
         ))}
       </Slider>
 

@@ -1,16 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Card, Input, Table } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import ReactPlayer from "react-player";
+import { useLocation, useParams } from "react-router-dom";
 import "./Candidate.module.css";
 
 const { TextArea } = Input;
 
 const Candidate = () => {
-  const [videoUrl, setVideoUrl] = useState("");
+  const [dataCandidate, setData] = useState([]);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [videoDest, setVideoDest] = useState(null);
+  const [file, setFile] = useState(null);
   const [isVideoExpanded, setIsVideoExpanded] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
+  const [mp4Url, setMp4Url] = useState("");
+  const location = useLocation();
+  const candidate = location.state.job;
+  console.log(candidate);
+  const { jobId, candidateId } = useParams();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(
+        `http://localhost:8800/api/users/${candidateId}`
+      );
+      const jsonData = await response.json();
+      setData(jsonData);
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch(
+        `http://localhost:8800/api/users/${jobId}/videodest`
+      );
+      const data = await response.json();
+      // setVideoUrl(data.videodest);
+      console.log("vid", data);
+      setVideoUrl(`file:///${data.videodest}/${data.filename}`);
+      console.log("video", videoUrl);
+    };
+    fetchData();
+  }, []);
 
   const columns = [
     {
@@ -73,6 +107,7 @@ const Candidate = () => {
 
   return (
     <div className="container" style={{ marginTop: "100px" }}>
+      <div>{dataCandidate.name}</div>
       <div className="video-container">
         <div
           style={{
@@ -84,7 +119,8 @@ const Candidate = () => {
         >
           <ReactPlayer
             className={`react-player ${isVideoExpanded ? "expanded" : ""}`}
-            url={"https://youtu.be/vx6MCEqGHR4"}
+            // url={"https://youtu.be/vx6MCEqGHR4"}
+            url={videoUrl}
             controls={true}
           />
         </div>

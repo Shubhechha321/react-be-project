@@ -22,6 +22,7 @@ export default function Login({ setToken, setRole }) {
   const [error, setError] = useState(false);
   const [loginError, setLoginError] = useState(false);
   const [accessToken, setAccessToken] = useState("");
+  const [userId, setUserId] = useState("");
   const [userRole, setUserRole] = useState("");
 
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ export default function Login({ setToken, setRole }) {
       });
 
       const data = await response.json(); // wait for the response to resolve and parse the JSON data
-      console.log(data.accessToken); // log the JSON data to the console
+      console.log(data); // log the JSON data to the console
       console.log(data.role);
       if (!response.ok) {
         throw new Error("Something went wrong");
@@ -67,7 +68,7 @@ export default function Login({ setToken, setRole }) {
       setSubmitted(true);
       setAccessToken(data.accessToken);
       setUserRole(data.role);
-
+      setUserId(data._id);
       // localStorage.getItem("token")
       console.log("response: ", response.json);
       setError(false);
@@ -78,25 +79,43 @@ export default function Login({ setToken, setRole }) {
     }
   };
 
+  function payload() {
+    const token = accessToken;
+
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
+    const payload = JSON.parse(jsonPayload);
+
+    console.log("payload", payload.result);
+    return payload.result._id;
+  }
+
   useEffect(() => {
     // pass accessToken to App.js as prop once it is available
     if ((accessToken, userRole)) {
       // props.setAccessToken(accessToken);
       setToken(accessToken);
       setRole(userRole);
+      payload();
       localStorage.setItem("token", JSON.stringify(accessToken));
       localStorage.setItem("role", JSON.stringify(userRole));
+      localStorage.setItem("userId", payload());
       // navigate("/");
     }
-  }, [accessToken, userRole]);
+  }, [accessToken, userRole, userId]);
 
   if (submitted) {
-    // Redirect to login page
-    // navigate("/");
-    // window.location.href = "/";
     if (userRole === "applicant") window.location.href = "/jobs";
     else window.location.href = "/recruiterJobs";
-    // navigate("/recruiterJobs");
   }
 
   // Showing error message if error is true

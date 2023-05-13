@@ -1,26 +1,18 @@
-import React, { Component, useState } from "react";
+import React, { useState } from "react";
 import styles from "./SignupSignIn.module.css";
-import { useHistory } from "react-router-dom";
 
 export default function SignUp() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [name, setName] = useState("");
   const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState("applicant");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(false);
 
   // Handling the first name change
-  const handleFirstName = (e) => {
-    setFirstName(e.target.value);
-    setSubmitted(false);
-  };
-
-  // Handling the last name change
-  const handleLastName = (e) => {
-    setLastName(e.target.value);
+  const handleName = (e) => {
+    setName(e.target.value);
     setSubmitted(false);
   };
 
@@ -32,6 +24,7 @@ export default function SignUp() {
 
   // Handling the email change
   const handleEmail = (e) => {
+    console.log("email");
     setEmail(e.target.value);
     setSubmitted(false);
   };
@@ -39,6 +32,7 @@ export default function SignUp() {
   // Handling the role change
   const handleRole = (e) => {
     setRole(e.target.value);
+    console.log(e.target.value);
     setSubmitted(false);
   };
 
@@ -87,8 +81,7 @@ export default function SignUp() {
     e.preventDefault();
 
     if (
-      firstName === "" ||
-      lastName === "" ||
+      name === "" ||
       username === "" ||
       email === "" ||
       password === "" ||
@@ -96,7 +89,7 @@ export default function SignUp() {
     ) {
       setError(true);
       return;
-    }
+    } else setError(false);
 
     try {
       const response = await fetch("http://localhost:8800/api/auth/register", {
@@ -105,8 +98,7 @@ export default function SignUp() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          firstName,
-          lastName,
+          name,
           username,
           email,
           password,
@@ -116,8 +108,8 @@ export default function SignUp() {
       console.log(
         "response: ",
         JSON.stringify({
-          firstName,
-          lastName,
+          name,
+          username,
           email,
           password,
           role,
@@ -126,7 +118,6 @@ export default function SignUp() {
       if (!response.ok) {
         throw new Error("Something went wrong");
       }
-
       setSubmitted(true);
       setError(false);
     } catch (err) {
@@ -150,25 +141,24 @@ export default function SignUp() {
     >
       <h3 className={styles.heading}>Sign Up</h3>
       <div className="mb-3">
-        <label className={styles.label}>First name</label>
+        <label className={styles.label}>Name</label>
         <input
-          type="text"
+          type=""
           className="form-control"
-          placeholder="First name"
-          onChange={handleFirstName}
-          value={firstName}
+          placeholder="Name"
+          onChange={handleName}
+          value={name}
         />
       </div>
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <label className={styles.label}>Last name</label>
         <input
-          type="text"
           className="form-control"
           placeholder="First name"
           onChange={handleLastName}
           value={lastName}
         />
-      </div>
+      </div> */}
       <div className="mb-3">
         <label className={styles.label}>Email address</label>
         <input
@@ -182,7 +172,6 @@ export default function SignUp() {
       <div className="mb-3">
         <label className={styles.label}>Username</label>
         <input
-          type="text"
           className="form-control"
           placeholder="Username"
           onChange={handleUserName}
@@ -197,7 +186,7 @@ export default function SignUp() {
           onChange={handleRole}
           value={role}
         >
-          <option value="">Select role</option>
+          {/* <option value="">Select role</option> */}
           <option value="applicant">Applicant</option>
           <option value="recruiter">Recruiter</option>
         </select>
